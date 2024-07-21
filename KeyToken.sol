@@ -1,4 +1,3 @@
-
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.6.6;
@@ -11,7 +10,7 @@ contract KeyToken is Ownable, ERC20 {
     using SafeMath for uint256;
 
     /**
-     * MOBOX FarmContract 
+     * MOBOX FarmContract
      */
     address public moboxFarm;
 
@@ -20,12 +19,10 @@ contract KeyToken is Ownable, ERC20 {
      */
     bool public eventMinted;
 
-    constructor() public ERC20("MoMo KEY", "KEY", 18) {
-
-    }
+    constructor() public ERC20("MoMo KEY", "KEY", 18) {}
 
     /**
-     * MOBOX FarmContract 
+     * MOBOX FarmContract
      */
     function setFarm(address farm_) external {
         if (moboxFarm == address(0)) {
@@ -53,14 +50,18 @@ contract KeyToken is Ownable, ERC20 {
         _mint(dest_, amount_);
     }
 
-    function burn(uint256 amount_) external { 
+    function burn(uint256 amount_) external {
         _burn(msg.sender, amount_);
     }
 
     function burnFrom(address from_, uint256 amount_) external {
         require(from_ != address(0), "burn from 0");
 
-        _approve(from_, msg.sender, _allowances[from_][msg.sender].sub(amount_));
+        _approve(
+            from_,
+            msg.sender,
+            _allowances[from_][msg.sender].sub(amount_)
+        );
         _burn(from_, amount_);
     }
 }

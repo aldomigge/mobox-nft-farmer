@@ -64,19 +64,22 @@ contract MoboxStrategyVBNB is Pausable, ReentrancyGuard {
     // WBNB Token address
     address public constant wbnb = 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c;
     // Pancake Swap rounter
-    address public constant pancakeRouter = 0x05fF2B0DB69458A0750badebc4f9e13aDd608C7F;
+    address public constant pancakeRouter =
+        0x05fF2B0DB69458A0750badebc4f9e13aDd608C7F;
     // Venus XVS token address
-    address public constant venusXvs = 0xcF6BB5389c92Bdda8a3747Ddb454cB7a64626C63;
+    address public constant venusXvs =
+        0xcF6BB5389c92Bdda8a3747Ddb454cB7a64626C63;
     // Venus distribution address
-    address public constant venusDistribution = 0xfD36E2c2a6789Db23113685031d7F16329158384;
-    uint256 public constant maxBuyBackRate = 600;   // max 6%
-    uint256 public constant maxDevFeeRate = 200;    // max 2%
+    address public constant venusDistribution =
+        0xfD36E2c2a6789Db23113685031d7F16329158384;
+    uint256 public constant maxBuyBackRate = 600; // max 6%
+    uint256 public constant maxDevFeeRate = 200; // max 2%
     uint256 public constant borrow_rate_max_hard = 5990;
 
     uint256 public shareTotal;
     address public moboxFarm;
-    address public vToken;          // 'vBNB' here
-    address public strategist; 
+    address public vToken; // 'vBNB' here
+    address public strategist;
     address public buyBackPool;
     address public devAddress;
     uint256 public buyBackRate;
@@ -88,9 +91,8 @@ contract MoboxStrategyVBNB is Pausable, ReentrancyGuard {
     uint256 public borrowDepth;
     //  after deposit, if the margin exceeds maxMarginTriggerDeposit, a deposit to venus will be triggered
     //  if the margin is not enough when withdrawing funds, take out a part of the token to the vault when withdrawing funds so that keep the margin reaching baseMarginForWithdraw
-    uint256 public baseMarginForWithdraw;      
+    uint256 public baseMarginForWithdraw;
     uint256 public maxMarginTriggerDeposit;
-    
 
     receive() external payable {}
 
@@ -105,8 +107,16 @@ contract MoboxStrategyVBNB is Pausable, ReentrancyGuard {
         uint256 margin_
     ) external onlyOwner {
         require(moboxFarm == address(0), "may only be init once");
-        require(vToken_ != address(0) && moboxFarm_ != address(0) && buyBackPool_ != address(0), "invalid param");
-        require(buyBackRate_ < maxBuyBackRate && devFeeRate_ < maxDevFeeRate, "invalid param");
+        require(
+            vToken_ != address(0) &&
+                moboxFarm_ != address(0) &&
+                buyBackPool_ != address(0),
+            "invalid param"
+        );
+        require(
+            buyBackRate_ < maxBuyBackRate && devFeeRate_ < maxDevFeeRate,
+            "invalid param"
+        );
 
         moboxFarm = moboxFarm_;
         strategist = strategist_;
@@ -134,11 +144,9 @@ contract MoboxStrategyVBNB is Pausable, ReentrancyGuard {
         IVBNB(vToken).mint{value: amount_}();
     }
 
- 
     function _removeSupply(uint256 amount_) internal {
         IVBNB(vToken).redeemUnderlying(amount_);
     }
-
 
     function _borrow(uint256 amount_) internal {
         IVBNB(vToken).borrow(amount_);
@@ -153,28 +161,30 @@ contract MoboxStrategyVBNB is Pausable, ReentrancyGuard {
         require(success, "user can't receive BNB with gas 3000");
     }
 
-    function wantLocal() public view returns(uint256) {
+    function wantLocal() public view returns (uint256) {
         return address(this).balance;
     }
 
-    function wantTotal() public view returns(uint256) {
+    function wantTotal() public view returns (uint256) {
         // Margin + Deposit-Borrow
-        return wantLocal().add(uint256(venusData.totalSupply)).sub(uint256(venusData.totalBorrow));
+        return
+            wantLocal().add(uint256(venusData.totalSupply)).sub(
+                uint256(venusData.totalBorrow)
+            );
     }
 
-    function getTotal() public view returns(uint256 wantTotal_, uint256 shareTotal_) {
+    function getTotal()
+        public
+        view
+        returns (uint256 wantTotal_, uint256 shareTotal_)
+    {
         wantTotal_ = wantTotal();
         shareTotal_ = shareTotal;
     }
 
-    function deposit(uint256 amount_) 
-        external 
-        payable
-        onlyOwner
-        whenNotPaused 
-        nonReentrant 
-        returns(uint256) 
-    {
+    function deposit(
+        uint256 amount_
+    ) external payable onlyOwner whenNotPaused nonReentrant returns (uint256) {
         updateBalance();
         // user's BNB already here
         uint256 oldWantTotal = wantTotal().sub(amount_);
@@ -183,7 +193,7 @@ contract MoboxStrategyVBNB is Pausable, ReentrancyGuard {
             shareAdd = amount_;
         } else {
             // shareAdd / (shareAdd + shareTotal) = amount_ / (amount_ + wantTotal)
-            shareAdd = amount_.mul(shareTotal).div(oldWantTotal);  
+            shareAdd = amount_.mul(shareTotal).div(oldWantTotal);
         }
         shareTotal = shareTotal.add(shareAdd);
 
@@ -192,17 +202,21 @@ contract MoboxStrategyVBNB is Pausable, ReentrancyGuard {
         return shareAdd;
     }
 
-    function withdraw(address user_, uint256 amount_, uint256 feeRate_) 
-        external
-        onlyOwner
-        nonReentrant
-        returns(uint256)
-    {
-        require(user_ != address(0) && amount_ > 0 && feeRate_ <= 50, "invalid param");
+    function withdraw(
+        address user_,
+        uint256 amount_,
+        uint256 feeRate_
+    ) external onlyOwner nonReentrant returns (uint256) {
+        require(
+            user_ != address(0) && amount_ > 0 && feeRate_ <= 50,
+            "invalid param"
+        );
         updateBalance();
         uint256 wantTotalAmount = wantTotal();
-        uint256 wantAmount = amount_ > wantTotalAmount ? wantTotalAmount : amount_;
-    
+        uint256 wantAmount = amount_ > wantTotalAmount
+            ? wantTotalAmount
+            : amount_;
+
         uint256 shareSub = wantAmount.mul(shareTotal).div(wantTotalAmount);
         shareTotal = shareTotal.sub(shareSub);
 
@@ -221,8 +235,10 @@ contract MoboxStrategyVBNB is Pausable, ReentrancyGuard {
             uint256 feeAmount = wantAmount.mul(feeRate_).div(10000);
             if (feeAmount > 0) {
                 wantAmount = wantAmount.sub(feeAmount);
-                
-                uint256 buyBackAmount = feeAmount.mul(buyBackRate).div(buyBackRate.add(devFeeRate));
+
+                uint256 buyBackAmount = feeAmount.mul(buyBackRate).div(
+                    buyBackRate.add(devFeeRate)
+                );
                 if (buyBackAmount > 0) {
                     _safeTransferETH(buyBackPool, buyBackAmount);
                 }
@@ -251,7 +267,7 @@ contract MoboxStrategyVBNB is Pausable, ReentrancyGuard {
         venusData.totalBorrow = SafeMathExt.safe128(totalBorrow);
     }
 
-    function _farm(bool withLeverage_) internal returns(bool) {
+    function _farm(bool withLeverage_) internal returns (bool) {
         // Before calling this function, need to call 'updateBalance'
         uint256 wantLocalAmount = wantLocal();
         if (wantLocalAmount < maxMarginTriggerDeposit) {
@@ -265,7 +281,7 @@ contract MoboxStrategyVBNB is Pausable, ReentrancyGuard {
         updateBalance();
         // Check the leverage ratio, if the leverage is too high, try to deleverage
         _deleverageUntilNotOverLevered();
-        
+
         return true;
     }
 
@@ -288,12 +304,14 @@ contract MoboxStrategyVBNB is Pausable, ReentrancyGuard {
      */
     function _deleverageOnce() internal {
         uint256 balanceBeforeSupply = wantLocal();
-        
+
         uint256 totalBorrow = uint256(venusData.totalBorrow);
         uint256 supplyTargeted = totalBorrow.mul(10000).div(borrowRate);
         if (venusData.totalSupply <= supplyTargeted) {
             // Remove deposits for repayment according to the highest leverage
-            uint256 supplyMin = totalBorrow.mul(10000).div(borrow_rate_max_hard);
+            uint256 supplyMin = totalBorrow.mul(10000).div(
+                borrow_rate_max_hard
+            );
             _removeSupply(uint256(venusData.totalSupply).sub(supplyMin));
         } else {
             _removeSupply(uint256(venusData.totalSupply).sub(supplyTargeted));
@@ -301,7 +319,7 @@ contract MoboxStrategyVBNB is Pausable, ReentrancyGuard {
 
         uint256 balanceAfterRemoveSupply = wantLocal();
         _repayBorrow(balanceAfterRemoveSupply.sub(balanceBeforeSupply));
-        
+
         // After the operation is completed, update the balance
         updateBalance();
     }
@@ -312,7 +330,9 @@ contract MoboxStrategyVBNB is Pausable, ReentrancyGuard {
     function _deleverageUntilNotOverLevered() internal {
         uint256 totalBorrow = uint256(venusData.totalBorrow);
         uint256 supplyTargeted = totalBorrow.mul(10000).div(borrowRate);
-        while (venusData.totalSupply > 0 && venusData.totalSupply <= supplyTargeted) {
+        while (
+            venusData.totalSupply > 0 && venusData.totalSupply <= supplyTargeted
+        ) {
             _deleverageOnce();
         }
     }
@@ -341,7 +361,9 @@ contract MoboxStrategyVBNB is Pausable, ReentrancyGuard {
     function _deleverage(uint256 minLocal_) internal {
         _deleverageUntilNotOverLevered();
 
-        uint256 supplyMin = uint256(venusData.totalBorrow).mul(10000).div(borrow_rate_max_hard);
+        uint256 supplyMin = uint256(venusData.totalBorrow).mul(10000).div(
+            borrow_rate_max_hard
+        );
         _removeSupply(uint256(venusData.totalSupply).sub(supplyMin));
         uint256 wantLocalAmount = wantLocal();
         while (wantLocalAmount < venusData.totalBorrow) {
@@ -351,7 +373,9 @@ contract MoboxStrategyVBNB is Pausable, ReentrancyGuard {
             _repayBorrow(wantLocalAmount);
             updateBalance();
 
-            supplyMin = uint256(venusData.totalBorrow).mul(10000).div(borrow_rate_max_hard);
+            supplyMin = uint256(venusData.totalBorrow).mul(10000).div(
+                borrow_rate_max_hard
+            );
             // removeSupply won't affect totalBorrow
             _removeSupply(uint256(venusData.totalSupply).sub(supplyMin));
 
@@ -369,12 +393,15 @@ contract MoboxStrategyVBNB is Pausable, ReentrancyGuard {
     }
 
     // _tokenA != _tokenB
-    function _makePath(address _tokenA, address _tokenB) internal pure returns(address[] memory path) {
+    function _makePath(
+        address _tokenA,
+        address _tokenB
+    ) internal pure returns (address[] memory path) {
         if (_tokenA == wbnb) {
             path = new address[](2);
             path[0] = wbnb;
             path[1] = _tokenB;
-        } else if(_tokenB == wbnb) {
+        } else if (_tokenB == wbnb) {
             path = new address[](2);
             path[0] = _tokenA;
             path[1] = wbnb;
@@ -386,7 +413,7 @@ contract MoboxStrategyVBNB is Pausable, ReentrancyGuard {
         }
     }
 
-    function harvest() whenNotPaused nonReentrant external {
+    function harvest() external whenNotPaused nonReentrant {
         if (!recoverPublic) {
             require(_msgSender() == strategist, "not strategist");
         }
@@ -410,14 +437,15 @@ contract MoboxStrategyVBNB is Pausable, ReentrancyGuard {
             return;
         }
 
-        IPancakeSwapRouter(pancakeRouter).swapExactTokensForETHSupportingFeeOnTransferTokens(
-            xvsAmount,
-            0,
-            _makePath(venusXvs, wbnb),
-            address(this),
-            block.timestamp.add(60)
-        );
-        
+        IPancakeSwapRouter(pancakeRouter)
+            .swapExactTokensForETHSupportingFeeOnTransferTokens(
+                xvsAmount,
+                0,
+                _makePath(venusXvs, wbnb),
+                address(this),
+                block.timestamp.add(60)
+            );
+
         _farm(false);
     }
 
@@ -436,7 +464,11 @@ contract MoboxStrategyVBNB is Pausable, ReentrancyGuard {
         _;
     }
 
-    function rebalance(uint256 borrowRate_, uint256 borrowDepth_, bool withFarm_) external onlyStrategist {
+    function rebalance(
+        uint256 borrowRate_,
+        uint256 borrowDepth_,
+        bool withFarm_
+    ) external onlyStrategist {
         require(borrowRate_ <= 5950 && borrowDepth_ <= 5, "invalid param");
         _deleverage(uint256(-1));
         borrowRate = borrowRate_;
@@ -453,13 +485,14 @@ contract MoboxStrategyVBNB is Pausable, ReentrancyGuard {
         uint256 dustAmount = IERC20(dustToken_).balanceOf(address(this));
         if (dustAmount > 0) {
             IERC20(dustToken_).safeIncreaseAllowance(pancakeRouter, dustAmount);
-            IPancakeSwapRouter(pancakeRouter).swapExactTokensForTokensSupportingFeeOnTransferTokens(
-                dustAmount,
-                0,
-                _makePath(dustToken_, venusXvs),
-                address(this),
-                block.timestamp.add(60)
-            );
+            IPancakeSwapRouter(pancakeRouter)
+                .swapExactTokensForTokensSupportingFeeOnTransferTokens(
+                    dustAmount,
+                    0,
+                    _makePath(dustToken_, venusXvs),
+                    address(this),
+                    block.timestamp.add(60)
+                );
         }
     }
 
@@ -473,15 +506,21 @@ contract MoboxStrategyVBNB is Pausable, ReentrancyGuard {
         devAddress = newDev_;
     }
 
-    function setFeeRate(uint256 buyBackRate_, uint256 devFeeRate_) external onlyStrategist {
-        require(buyBackRate_ <= maxBuyBackRate && devFeeRate_ <= maxDevFeeRate, "invalid param");
+    function setFeeRate(
+        uint256 buyBackRate_,
+        uint256 devFeeRate_
+    ) external onlyStrategist {
+        require(
+            buyBackRate_ <= maxBuyBackRate && devFeeRate_ <= maxDevFeeRate,
+            "invalid param"
+        );
         buyBackRate = buyBackRate_;
         devFeeRate = devFeeRate_;
     }
 
     function setRecoverPublic(bool val_) external onlyStrategist {
         recoverPublic = val_;
-    } 
+    }
 
     function setMargin(uint256 margin_) external onlyStrategist {
         baseMarginForWithdraw = margin_;

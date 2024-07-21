@@ -1,5 +1,13 @@
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.6.6;
+
 interface IMoboxToken {
-    function transfer(address recipient, uint256 amount) external returns (bool);
+    function transfer(
+        address recipient,
+        uint256 amount
+    ) external returns (bool);
+
     function burn(uint256 amount_) external;
 }
 
@@ -13,26 +21,27 @@ contract MoboxEventPool is Ownable {
         uint256 eventAmount,
         uint256 devTeamAmount,
         bytes reason
-    ); 
-
-    event EventPoolBurn(
-        address bunner,
-        uint256 amount,
-        bytes reason
     );
+
+    event EventPoolBurn(address bunner, uint256 amount, bytes reason);
 
     uint256 public constant devTeamRate = 2000;
     address public moboxToken;
     address public finance;
     address public devTeam;
-    string public poolName;     // Event/Partner
+    string public poolName; // Event/Partner
 
-    constructor() public {
+    constructor() public {}
 
-    }
-
-    function init(string memory name_, address mobox_, address finance_) external onlyOwner {
-        require(mobox_ != address(0) && finance_ != address(0), "invalid param");
+    function init(
+        string memory name_,
+        address mobox_,
+        address finance_
+    ) external onlyOwner {
+        require(
+            mobox_ != address(0) && finance_ != address(0),
+            "invalid param"
+        );
         poolName = name_;
         finance = finance_;
         moboxToken = mobox_;
@@ -52,8 +61,15 @@ contract MoboxEventPool is Ownable {
         finance = addr_;
     }
 
-    function applyFor(address to_, uint256 amount_, bytes memory reason_) external onlyFinance {
-        require(to_ != address(0) && devTeam != address(0) && reason_.length <= 256, "invalid param");
+    function applyFor(
+        address to_,
+        uint256 amount_,
+        bytes memory reason_
+    ) external onlyFinance {
+        require(
+            to_ != address(0) && devTeam != address(0) && reason_.length <= 256,
+            "invalid param"
+        );
         uint256 devTeamAmount = amount_.mul(devTeamRate).div(10000);
         uint256 eventAmount = amount_.sub(devTeamAmount);
 
@@ -61,7 +77,14 @@ contract MoboxEventPool is Ownable {
         mbox.transfer(to_, eventAmount);
         mbox.transfer(devTeam, devTeamAmount);
 
-        emit EventApply(msg.sender, to_, amount_, eventAmount, devTeamAmount, reason_);
+        emit EventApply(
+            msg.sender,
+            to_,
+            amount_,
+            eventAmount,
+            devTeamAmount,
+            reason_
+        );
     }
 
     function burn(uint256 amount_, bytes memory reason_) external onlyFinance {
