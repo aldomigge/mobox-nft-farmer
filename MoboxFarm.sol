@@ -38,7 +38,7 @@ interface IVeMobox {
 }
 
 interface IMoMoMinter {
-    function addBox(address to_, uint256 amount_) external;
+    function addBoxs(address to_, uint256 amount_) external;
 }
 
 interface IKeyToken {
@@ -705,7 +705,7 @@ contract MoboxFarm is Ownable, ReentrancyGuard {
         uint256 needKey = boxAmount_.mul(1e18);
         if (keyAmount >= needKey) {
             rewardStore[msg.sender] = keyAmount.sub(needKey);
-            IMoMoMinter(momoMinter).addBox(msg.sender, boxAmount_);
+            IMoMoMinter(momoMinter).addBoxs(msg.sender, boxAmount_);
             emit RewardPaid(msg.sender, needKey);
         }
     }
