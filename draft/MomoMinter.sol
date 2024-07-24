@@ -24,7 +24,7 @@ contract MoMoMinter {
         momoTokenAddress = momoTokenAddress_;
     }
 
-    function addBoxs(address to_, uint256 amount_) external {
+    function addBox(address to_, uint256 amount_) external {
         require(
             amount_ <= MAX_BOXES_PER_TX,
             "Exceeds maximum boxes per transaction"
